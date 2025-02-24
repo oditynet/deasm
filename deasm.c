@@ -41,11 +41,52 @@ void disassemble(const uint8_t *code, size_t size,size_t ind) {
 */        // Читаем опкод
         uint8_t opcode = code[i];
         switch (opcode) {
+            //mov rax
+            /*case 0x74: 
+                if (i + 1 < size ) {
+                    printf("je %02X          0x%02X%02X%02X%02X\n",code[i+1],code[i+2],code[i+3],code[i+4],code[i+4]);
+                    i += 4;
+                } else {
+                    printf("je %02X                   db 0x%02X\n", opcode, opcode);
+                    i += 1;
+                }
+                break;
+            */
+            case 0x49:
+	       if (i + 1 < size && code[i + 1] == 0x89 && code[i + 2] == 0xd1) {
+                    printf("49 89 d1          move r9,rdx\n");
+                    i += 3;
+                    break;
+                } else {
+                    printf("%02X                   db 0x%02X\n", opcode, opcode);
+                    i += 1;
+                }
+                break;
+            //leave
+            case 0xC9: 
+                printf("0xc9                 leave\n");
+                i += 1;
+                break;
+            // move byte
+            case 0xC6:
+                if (i + 1 < size && code[i + 1] == 0x45 ) {
+                    printf("c6 45 %02X %02X          move byte [var_?], %02X;  '%01c'\n", code[i+2], code[i+3], code[i+3], code[i+3]);
+                    i += 4;
+                    break;
+                } else {
+                    printf("%02X                   db 0x%02X\n", opcode, opcode);
+                    i += 1;
+                }
+                break;
+
+            
+                
             // INT
             case 0xF3:
                 if (i + 1 < size && code[i + 1] == 0x0F && code[i + 2] == 0x1E && code[i + 3] == 0xFA) {
                     printf("F3 0F 1E FA          endbr64\n");
                     i += 4;
+                    break;
                 } else {
                     printf("%02X                   db 0x%02X\n", opcode, opcode);
                     i += 1;
@@ -56,8 +97,58 @@ void disassemble(const uint8_t *code, size_t size,size_t ind) {
                 if (i + 1 < size && code[i + 1] == 0x83 && code[i + 2] == 0xEC && code[i + 3] == 0x08) {
                     printf("48 83 EC 08          sub rsp, 8\n");
                     i += 4;
-                } else {
-                    printf("%02X                   db 0x%02X\n", opcode, opcode);
+                    break;
+                }
+                if (i + 1 < size && code[i+1] == 0x85 && code[i+2] == 0xc0) {
+                    printf("48 85 0c             test rax,rax \n");
+                    i += 3;
+                    break;
+                } else if (i + 1 < size && code[i+1] == 0x8b && code[i+2] == 0x05) {
+                    printf("48 8b 05 %02X %02X       mov rax,qword [?];  %02X %02X\n", code[i+3], code[i+4], code[i+5], code[i+6]);
+                    i += 7;
+                }else if (i + 1 < size && code[i+1] == 0x83 && code[i+2] == 0xc4) {
+                    printf("48 83 c4 %02X          add rsp, %02X \n",code[i+3],code[i+3]);
+                    i += 4;
+                    break;
+                }else if (i + 1 < size && code[i+1] == 0x83 && code[i+2] == 0xec) {
+                    printf("48 83 ec %02X          sub rsp, %02X \n",code[i+3],code[i+3]);
+                    i += 4;
+                    break;
+                }else if (i + 1 < size && code[i+1] == 0x89 && code[i+2] == 0xe5) {
+                    printf("48 89 e5             mov rbp,rsp\n");
+                    i += 3;
+                    break;
+                }else if (i + 1 < size && code[i+1] == 0x89 && code[i+2] == 0xc6) {
+                    printf("48 89 c6             mov rsi,rax\n");
+                    i += 3;
+                    break;
+                }else if (i + 1 < size && code[i+1] == 0x8d && code[i+2] == 0x45) {
+                    printf("48 8d 45             lea rax, [var_?] ;  %02X\n",code[i+3]);
+                    i += 4;
+                    break;
+                }else if (i + 1 < size && code[i+1] == 0x8d && code[i+2] == 0x55) {
+                    printf("48 8d 55             lea rdx, [var_?] ;  %02X\n",code[i+3]);
+                    i += 4;
+                    break;
+                }else if (i + 1 < size && code[i+1] == 0x89 && code[i+2] == 0xe2) {
+                    printf("48 89 e2             mov rdx, rsp\n");
+                    i += 3;
+                    break;        
+                }else if (i + 1 < size && code[i+1] == 0x89 && code[i+2] == 0xc6) {
+                    printf("48 89 c6             mov rsi, rax ;\n");
+                    i += 3;
+                    break;
+                }else if (i + 1 < size && code[i+1] == 0x89 && code[i+2] == 0xd6) {
+                    printf("48 89 d6             mov rsi, rdx ;\n");
+                    i += 3;
+                    break;
+                }else if (i + 1 < size && code[i+1] == 0x89 && code[i+2] == 0xc7) {
+                    printf("48 89 c7             mov rdi, rax ;\n");
+                    i += 3;
+                    break;
+                }
+                 else {
+                    printf("%02X                   db 0x%02X; 48->\n", opcode, opcode);
                     i += 1;
                 }
                 break;
@@ -81,9 +172,21 @@ void disassemble(const uint8_t *code, size_t size,size_t ind) {
                 i += 2;
                 break;
             case 0x89: // MOV r/m32, r32
-                printf("89 %02x                mov [r/m32], r32\n", code[i + 1]);
-                i += 2;
-                break;
+                if (i + 1 < size && code[i + 1] == 0x45  && code[i + 2] == 0xac ) {
+                    printf("89 45 ac            mov dword [var_?], eax\n");
+                    i += 3;
+                    break;
+                }
+                else if (i + 1 < size && code[i + 1] == 0x45  && code[i + 2] == 0xac ) {
+                    printf("89 45 ac            mov dword [var_?], eax\n");
+                    i += 3;
+                    break;
+                }
+                else{
+                  printf("89 %02x                mov [r/m32], r32\n", code[i + 1]);
+                  i += 2;
+                  break;
+                }
             case 0x8A: // MOV r8, r/m8
                 printf("8A %02x                mov r8, [r/m8]\n", code[i + 1]);
                 i += 2;
@@ -101,7 +204,7 @@ void disassemble(const uint8_t *code, size_t size,size_t ind) {
                 i += 2;
                 break;
             case 0xB8 ... 0xBF: // MOV r32, imm32
-                printf("%02x %02x %02x %02x %02x     mov %s, 0x%08x\n", opcode, code[i + 1], code[i + 2], code[i + 3], code[i + 4],
+                printf("%02x %02x %02x %02x %02x       mov %s, 0x%08x\n", opcode, code[i + 1], code[i + 2], code[i + 3], code[i + 4],
                        (opcode == 0xB8) ? "eax" : (opcode == 0xB9) ? "ecx" :
                        (opcode == 0xBA) ? "edx" : (opcode == 0xBB) ? "ebx" :
                        (opcode == 0xBC) ? "esp" : (opcode == 0xBD) ? "ebp" :
@@ -128,9 +231,17 @@ void disassemble(const uint8_t *code, size_t size,size_t ind) {
                 i += 2;
                 break;
             case 0x31: // XOR r/m32, r32
-                printf("31 %02x                xor [r/m32], r32\n", code[i + 1]);
-                i += 2;
-                break;
+    	        if (code[i + 1] == 0Xed)
+    	        {
+    	    	    printf("31 %02x                xor [r/m32], r32\n", code[i + 1]);
+    	            i += 2;
+                    break;
+    	        }
+    	        else{
+                  printf("31 %02x                xor ebx, ebx\n", code[i + 1]);
+                  i += 2;
+                  break;
+                }
             case 0x33: // XOR r32, r/m32
                 printf("33 %02x                xor r32, [r/m32]\n", code[i + 1]);
                 i += 2;
@@ -150,7 +261,7 @@ void disassemble(const uint8_t *code, size_t size,size_t ind) {
                 i += 2;
                 break;
             case 0xE8: // CALL rel32
-                printf("E8 %02x %02x %02x %02x     call 0x%04lx\n", code[i + 1], code[i + 2], code[i + 3], code[i + 4],
+                printf("E8 %02x %02x %02x %02x       call 0x%04lx\n", code[i + 1], code[i + 2], code[i + 3], code[i + 4],
                        i + 5 + *(int32_t *)(code + i + 1));
                 i += 5;
                 break;
@@ -187,8 +298,8 @@ void disassemble(const uint8_t *code, size_t size,size_t ind) {
 }
 
 size_t print_strings(const char *data, size_t size, size_t ind) {
-    size_t k = ind; //=0;
-    printf("0x%04lx: ", k); // Выводим смещение
+    size_t k = ind,t=0; //=0;
+    printf("0x%04lx(0x%04lx): ", k,t); // Выводим смещение
     for (size_t i = 0; i < size; i++) {
 	if (data[i] == '\0' && data[i+1] == '\0' ) { //удаляем пустые строки подряд идущие
 	    i+=1;continue;
@@ -197,15 +308,16 @@ size_t print_strings(const char *data, size_t size, size_t ind) {
             // Конец строки
             printf("\n");
             if (i+1 < size)
-              printf("0x%04lx: ", k); // Выводим смещение
+              printf("0x%04lx(0x%04lx): ", k,t);
+              //printf("0x%04lx: ", k); // Выводим смещение
         } else if (data[i] >= 32 && data[i] <= 126) {
             // Печатаем только печатные символы
-            printf("%c", data[i]);
-            k++;
+            printf("%01c", data[i]);
+            k++;t++;
         }
         else {
-        printf("\\%02x", data[i]);
-            k++;
+        printf("%02lx", data[i]);
+            k++;t++;
         }
     }
     return k;
@@ -272,8 +384,12 @@ int main(int argc, char *argv[]) {
         }
     }
     printf("\n");
+    ind =0;
     for (int i = 0; i < header->e_shnum; i++) {
-        if (shdr[i].sh_type == SHT_PROGBITS && (shdr[i].sh_flags & SHF_EXECINSTR)) {
+        if (shdr[i].sh_type == SHT_PROGBITS && (shdr[i].sh_flags & SHF_EXECINSTR) && (
+        (strcmp(shstrtab + shdr[i].sh_name, ".init") == 0) ||
+        (strcmp(shstrtab + shdr[i].sh_name, ".text") == 0) ||
+        (strcmp(shstrtab + shdr[i].sh_name, ".fini") == 0))) {
             printf("\n     Disassembling section %s (offset: %lx, size: %lx):\n",
                    shstrtab + shdr[i].sh_name, (unsigned long)shdr[i].sh_offset, (unsigned long)shdr[i].sh_size);
 
